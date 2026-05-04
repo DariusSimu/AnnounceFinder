@@ -23,7 +23,10 @@ def register_user(email, password):
     return user, None
 
 def login_user(email, password):
-    user = User.query.filter_by(email=encrypt(email)).first()
+    encrypted_email = encrypt(email)
+    print(f"Looking for encrypted email: {encrypted_email}")
+    user = User.query.filter_by(email=encrypted_email).first()
+    print(f"User found: {user}")
     if not user or not check_password_hash(user.password_hash, password):
         return None, 'Invalid email or password'
     return user, None
