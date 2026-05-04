@@ -3,13 +3,21 @@ from flask_login import LoginManager, login_user, logout_user, current_user
 from Backend.main_crawler import search_all
 from Backend.database import db
 from Backend.models_db import User
-from Backend.services import register_user, login_user_service, add_favorite, remove_favorite, get_favorites
-from config import SECRET_KEY
+from Backend.services import register_user, login_user as login_user_service, add_favorite, remove_favorite, get_favorites
+from config import SECRET_KEY, ENCRYPTION_KEY
+from Backend.encryption import decrypt
+import os
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///announcefinder.db'
+database_url = os.environ.get('DATABASE_URL', 'sqlite:///announcefinder.db')
+if database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = SECRET_KEY
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', SECRET_KEY)
+app.config['ENCRYPTION_KEY']  = os.environ.get('ENCRYPTION_KEY', ENCRYPTION_KEY)
+
 
 db.init_app(app)
 login_manager = LoginManager()
@@ -93,7 +101,7 @@ def logout():
 @app.route('/me')
 def me():
     if current_user.is_authenticated:
-        return jsonify({'logged_in': True, 'email': current_user.email})
+        return jsonify({'logged_in': True, 'email': decrypt(current_user.email)})
     return jsonify({'logged_in': False})
 
 # ------------- Favorites --------------

@@ -1,6 +1,7 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from Backend.database import db
 from Backend.models_db import User, Favorite
+from Backend.encryption import encrypt, decrypt
 import re
 
 def is_valid_email(email):
@@ -11,15 +12,18 @@ def register_user(email, password):
         return None, 'Invalid email address'
     if len(password) < 6:
         return None, 'Password must be at least 6 characters long'
-    if User.query.filter_by(email=email).first():
+    if User.query.filter_by(email=encrypt(email)).first():
         return None, 'Email already registered'
-    user = User(email=email, password_hash=generate_password_hash(password))
+    user = User(
+        email         = encrypt(email),
+        password_hash = generate_password_hash(password)
+    )
     db.session.add(user)
     db.session.commit()
     return user, None
 
-def login_user_service(email, password):
-    user = User.query.filter_by(email=email).first()
+def login_user(email, password):
+    user = User.query.filter_by(email=encrypt(email)).first()
     if not user or not check_password_hash(user.password_hash, password):
         return None, 'Invalid email or password'
     return user, None
@@ -50,7 +54,7 @@ def remove_favorite(user_id, listing_id):
     return True, None
 
 def get_favorites(user_id):
-    favs = Favorite.query.filter_by(user_id=user_id).all()
+    favs = Favorite.query.filter_by(user_id=user_id).order_by(Favorite.id.desc()).all()
     return [{
         'listing_id': f.listing_id,
         'title':      f.title,
