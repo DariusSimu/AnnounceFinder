@@ -6,6 +6,7 @@
   <title>Sign In — AnnounceFinder</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="/Style.css"/>
+  <link rel="icon" href="/static/favicon.ico" type="image/x-icon"/></head>
 </head>
 <body>
 
@@ -38,6 +39,9 @@
           <input type="password" id="login-password" placeholder="Password" autocomplete="current-password"/>
         </div>
         <button class="auth-submit" onclick="handleLogin()">Sign In</button>
+        <p style="text-align:center; margin-top:1rem;">
+            <a href="/forgot-password" class="forgot-link">Forgot password?</a>
+        </p>
       </div>
 
       <div id="form-register" style="display:none">

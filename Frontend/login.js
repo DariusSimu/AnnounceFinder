@@ -67,6 +67,18 @@ async function handleRegister() {
     }
 }
 
+async function handleForgotPassword() {
+    const email = document.getElementById('login-email').value.trim();
+    if (!email) { showMessage('Enter your email first.'); return; }
+    
+    await fetch('/forgot-password', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email })
+    });
+    showMessage('If that email exists, a reset link has been sent.', false);
+}
+
 document.addEventListener('keydown', e => {
     if (e.key !== 'Enter') return;
     const activeTab = document.getElementById('tab-login').classList.contains('active');

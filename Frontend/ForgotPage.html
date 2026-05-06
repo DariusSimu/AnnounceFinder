@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Forgot Password — AnnounceFinder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/Style.css"/>
+  <link rel="icon" href="/static/favicon.ico" type="image/x-icon"/></head>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <main class="main">
+    <header class="hero">
+      <a href="/" class="logo-link">
+        <h1 class="logo">Announce<span>Finder</span></h1>
+      </a>
+    </header>
+    <div class="auth-container">
+      <div class="auth-tabs">
+        <span class="auth-tab active">Forgot Password</span>
+      </div>
+      <p class="auth-message" id="auth-message"></p>
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="forgot-email" placeholder="your@email.com" autocomplete="email"/>
+      </div>
+      <button class="auth-submit" onclick="handleForgotPassword()">Send Reset Link</button>
+      <p style="text-align:center; margin-top:1rem;">
+        <a href="/login" class="forgot-link">Back to Sign In</a>
+      </p>
+    </div>
+  </main>
+  <footer class="footer">AnnounceFinder</footer>
+  <script src="/forgot.js"></script>
+</body>
+</html>

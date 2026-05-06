@@ -3,8 +3,7 @@ from flask_login import LoginManager, login_user, logout_user, current_user
 from Backend.main_crawler import search_all
 from Backend.database import db
 from Backend.models_db import User
-from Backend.services import register_user, login_user as login_user_service, add_favorite, remove_favorite, get_favorites
-from Backend.encryption import decrypt
+from Backend.services import register_user, login_user as login_user_service, add_favorite, remove_favorite, get_favorites, request_password_reset, reset_password
 import os
 
 app = Flask(__name__)
@@ -16,13 +15,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 try:
-    from config import SECRET_KEY as _SECRET_KEY, ENCRYPTION_KEY as _ENCRYPTION_KEY
+    from config import SECRET_KEY as _SECRET_KEY
 except ImportError:
-    _SECRET_KEY      = ''
-    _ENCRYPTION_KEY  = ''
+    _SECRET_KEY = ''
 
-app.config['SECRET_KEY']     = os.environ.get('SECRET_KEY',     _SECRET_KEY)
-app.config['ENCRYPTION_KEY'] = os.environ.get('ENCRYPTION_KEY', _ENCRYPTION_KEY)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', _SECRET_KEY)
 
 
 db.init_app(app)
@@ -53,6 +50,14 @@ def login_js():
 def filter_js():
     return send_from_directory('Frontend', 'filter.js')
 
+@app.route('/reset.js')
+def reset_js():
+    return send_from_directory('Frontend', 'reset.js')
+
+@app.route('/forgot.js')
+def forgot_js():
+    return send_from_directory('Frontend', 'forgot.js')
+
 # --------------- Pages -------------------
 @app.route('/')
 def index():
@@ -65,6 +70,14 @@ def login_page():
 @app.route('/favorites')
 def favorites_page():
     return send_from_directory('Frontend', 'AccountPage.html')
+
+@app.route('/forgot-password')
+def forgot_page():
+    return send_from_directory('Frontend', 'ForgotPage.html')
+
+@app.route('/reset/<token>')
+def reset_page(token):
+    return send_from_directory('Frontend', 'ResetPage.html')
 
 @app.route('/Style.css')
 def styles():
@@ -134,6 +147,39 @@ def fav_get():
     if not current_user.is_authenticated:
         return jsonify({'error': 'Not logged in'}), 401
     return jsonify(get_favorites(current_user.id))
+
+# ------------- Password Reset --------------
+@app.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    data  = request.get_json()
+    email = data.get('email', '').strip()
+    base_url = request.host_url.rstrip('/')
+    request_password_reset(email, base_url)
+    return jsonify({'success': True})
+
+@app.route('/reset/<token>', methods=['POST'])
+def reset_password_route(token):
+    try:
+        data     = request.get_json()
+        password = data.get('password', '')
+        success, error = reset_password(token, password)
+        if not success:
+            return jsonify({'error': error}), 400
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Reset error: {e}")
+        return jsonify({'error': 'Something went wrong'}), 500
+    
+# ------------- Exchange Rates --------------
+@app.route('/exchange-rates')
+def exchange_rates():
+    import requests as req
+    try:
+        res  = req.get('https://api.frankfurter.app/latest?from=EUR&to=RON,GBP', timeout=5)
+        return jsonify(res.json())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)

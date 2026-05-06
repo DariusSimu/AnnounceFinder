@@ -519,3 +519,14 @@ body {
     border: 1px solid var(--border);
     color: var(--text-dim);
 }
+
+/* -- Reset page -- */
+.forgot-link {
+    color: var(--text-dim);
+    font-size: .85rem;
+    font-style: italic;
+    text-decoration: none;
+    transition: color .2s;
+}
+
+.forgot-link:hover { color: var(--gold); }

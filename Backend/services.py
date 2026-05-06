@@ -1,8 +1,19 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from Backend.database import db
-from Backend.models_db import User, Favorite
-from Backend.encryption import encrypt, decrypt
+from Backend.models_db import User, Favorite, PasswordResetToken
+from email.mime.text import MIMEText
+import smtplib
 import re
+import os
+
+try:
+    from config import GMAIL_ADDRESS as _GMAIL, GMAIL_PASSWORD as _GMAIL_PASS
+except ImportError:
+    _GMAIL      = ''
+    _GMAIL_PASS = ''
+
+GMAIL_ADDRESS  = os.environ.get('GMAIL_ADDRESS',  _GMAIL)
+GMAIL_PASSWORD = os.environ.get('GMAIL_PASSWORD', _GMAIL_PASS)
 
 def is_valid_email(email):
     return re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', email) is not None
@@ -61,3 +72,51 @@ def get_favorites(user_id):
         'condition':  f.condition,
         'image':      f.image
     } for f in favs]
+
+def send_reset_email(to_email, token, base_url):
+    reset_link = f"{base_url}/reset/{token}"
+    body = f"""
+    You requested a password reset for your AnnounceFinder account.
+    
+    Click the link below to reset your password (valid for 1 hour):
+    {reset_link}
+    
+    If you did not request this, ignore this email.
+    """
+    msg = MIMEText(body)
+    msg['Subject'] = 'AnnounceFinder — Password Reset'
+    msg['From']    = GMAIL_ADDRESS
+    msg['To']      = to_email
+
+    try:
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login(GMAIL_ADDRESS, GMAIL_PASSWORD)
+            smtp.sendmail(GMAIL_ADDRESS, to_email, msg.as_string())
+        return True
+    except Exception as e:
+        print(f"Email error: {e}")
+        return False
+
+def request_password_reset(email, base_url):
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return True  # don't reveal if email exists
+    token = PasswordResetToken.generate(user.id)
+    send_reset_email(email, token, base_url)
+    return True
+
+def reset_password(token, new_password):
+    reset = PasswordResetToken.query.filter_by(token=token).first()
+    if not reset:
+        return False, 'Invalid or expired reset link'
+    if reset.is_expired():
+        db.session.delete(reset)
+        db.session.commit()
+        return False, 'Reset link has expired'
+    if len(new_password) < 6:
+        return False, 'Password must be at least 6 characters'
+    user = User.query.get(reset.user_id)
+    user.password_hash = generate_password_hash(new_password)
+    db.session.delete(reset)
+    db.session.commit()
+    return True, None

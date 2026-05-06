@@ -1,9 +1,9 @@
-// ── Exchange rates ──────────────────────────────
+// ----------- Exchange rates -----------
 let exchangeRates = {};
 
 async function fetchExchangeRates() {
     try {
-        const res  = await fetch('https://api.frankfurter.app/latest?from=EUR&to=RON,GBP');
+        const res  = await fetch('/exchange-rates');
         const data = await res.json();
         exchangeRates = data.rates;
         exchangeRates['EUR'] = 1.0;
@@ -13,7 +13,7 @@ async function fetchExchangeRates() {
     }
 }
 
-// ── Price parsing ───────────────────────────────
+// ----------- Price parsing and conversion ----------
 function parsePrice(priceStr) {
     if (!priceStr || priceStr === 'N/A') return null;
     const match = priceStr.match(/([\d.,]+)\s*([A-Z]+)/);
@@ -39,7 +39,7 @@ function convertPrice(priceStr, targetCurrency) {
     return `${converted.toFixed(2)} ${targetCurrency}`;
 }
 
-// ── Filter state ────────────────────────────────
+// ----------- Filter state and logic -----------
 let filterState = {
     sort:              'none',
     displayCurrency:   'none',
@@ -54,7 +54,7 @@ function updateFilterState() {
     filterState.platforms       = [...document.querySelectorAll('.filter-platform:checked')].map(p => p.value);
 }
 
-// ── Pipeline ────────────────────────────────────
+// ---------- Apply filters and sorting to listings ----------
 function applyFilters(listings) {
     updateFilterState();
     let result = [...listings];
@@ -93,14 +93,14 @@ function applyFilters(listings) {
     return result;
 }
 
-// ── Display currency ────────────────────────────
+// ----------- Display currency -----------
 function getDisplayPrice(priceStr) {
     if (filterState.displayCurrency === 'none') return priceStr;
     const converted = convertPrice(priceStr, filterState.displayCurrency);
     return converted || priceStr;
 }
 
-// ── Platform checkboxes ─────────────────────────
+// ----------- Platform checkboxes -----------
 function buildPlatformCheckboxes(listings) {
     const platforms = [...new Set(listings.map(r => r.platform))];
     const container = document.getElementById('filter-platforms');
@@ -116,7 +116,7 @@ function buildPlatformCheckboxes(listings) {
     });
 }
 
-// ── Called on any filter change ─────────────────
+// ----------- Called on any filter change -----------
 function onFilterChange() {
     if (typeof currentListings !== 'undefined') {
         renderListings(applyFilters(currentListings));
