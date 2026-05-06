@@ -89,7 +89,9 @@ def send_reset_email(to_email, token, base_url):
     msg['To']      = to_email
 
     try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+        with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
+            smtp.ehlo()
+            smtp.starttls()
             smtp.login(GMAIL_ADDRESS, GMAIL_PASSWORD)
             smtp.sendmail(GMAIL_ADDRESS, to_email, msg.as_string())
         return True
